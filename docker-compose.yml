@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres-user-db:
+    image: postgres:15
+    container_name: postgres-user-db
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: password
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - microservice-network
+
+  postgres-company-db:
+    image: postgres:15
+    container_name: postgres-company-db
+    environment:
+      POSTGRES_DB: company_db
+      POSTGRES_USER: company_admin
+      POSTGRES_PASSWORD: password
+    volumes:
+      - company_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - microservice-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user-db:5432/task1
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=2210
+      - COMPANY_SERVICE_URL=http://company-service:8081
+    depends_on:
+      - postgres-user-db
+    networks:
+      - microservice-network
+
+  company-service:
+    build:
+      context: ./company-service
+      dockerfile: Dockerfile
+    container_name: company-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-company-db:5432/company_db
+      - SPRING_DATASOURCE_USERNAME=company_admin
+      - SPRING_DATASOURCE_PASSWORD=password
+      - USER_SERVICE_URL=http://user-service:8080
+    depends_on:
+      - postgres-company-db
+    networks:
+      - microservice-network
+
+volumes:
+  user_db_data:
+  company_db_data:
+
+networks:
+  microservice-network:
+    driver: bridge
