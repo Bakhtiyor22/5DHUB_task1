@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.4'
-	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.springframework.boot' version '3.4.4' // Use the same version as user-service
+	id 'io.spring.dependency-management' version '1.1.7' // Use the same version as user-service
 }
 
 group = 'org.example'
@@ -13,26 +13,31 @@ java {
 	}
 }
 
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-web' // For REST controllers
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // For JPA/Hibernate
+	runtimeOnly 'org.postgresql:postgresql' // PostgreSQL driver
+
+	// Lombok for reducing boilerplate
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// Ensure bootJar is enabled and standard jar is disabled for Spring Boot apps
+bootJar {
+	enabled = true
+}
+jar {
+	enabled = false
 }
