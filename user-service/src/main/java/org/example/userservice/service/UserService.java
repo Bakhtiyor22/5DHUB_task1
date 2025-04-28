@@ -23,7 +23,7 @@ public class UserService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${COMPANY_SERVICE_URL}") // Inject URL from environment variable
+    @Value("${COMPANY_SERVICE_URL}") 
     private String companyServiceUrl;
 
     public List<UserResponseDto> getAllUsers() {
@@ -52,12 +52,9 @@ public class UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
 
-        // Basic validation example
         if (userDetails.getCompanyId() == null) {
             throw new IllegalArgumentException("Company ID must be provided");
         }
-        // Optional: Check if new company exists
-        // getCompanyById(userDetails.getCompanyId()); // Uncomment if strict validation is needed
 
         existingUser.setFirstName(userDetails.getFirstName());
         existingUser.setLastName(userDetails.getLastName());
@@ -76,8 +73,6 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // --- Helper Methods ---
-
     private UserResponseDto mapUserToResponseDto(User user) {
         CompanyDto companyDto = getCompanyById(user.getCompanyId());
         return new UserResponseDto(
@@ -90,24 +85,16 @@ public class UserService {
     }
 
     private CompanyDto getCompanyById(Long companyId) {
-        // Construct the URL to the company service endpoint
         String url = companyServiceUrl + "/api/companies/" + companyId;
         try {
-            // Make the REST call
             CompanyDto company = restTemplate.getForObject(url, CompanyDto.class);
             if (company == null) {
-                // Handle case where company service returns null (e.g., 404)
-                // Depending on requirements, could return a default/empty DTO or throw an exception
                 System.err.println("Warning: Company not found for ID: " + companyId + " at URL: " + url);
-                // Returning an empty DTO for now, adjust as needed
                 return new CompanyDto(companyId, "Company Not Found", null);
             }
             return company;
         } catch (Exception e) {
-            // Log the error and handle appropriately
-            // For now, returning a placeholder or re-throwing might be options
             System.err.println("Error fetching company details for ID: " + companyId + " from URL: " + url + ". Error: " + e.getMessage());
-            // Returning an empty DTO as a fallback
             return new CompanyDto(companyId, "Error Fetching Company", null);
         }
     }

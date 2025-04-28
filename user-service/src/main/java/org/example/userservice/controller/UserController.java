@@ -12,20 +12,18 @@ import jakarta.persistence.EntityNotFoundException; // Import standard JPA excep
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users") // Base path for user endpoints
+@RequestMapping("/api/users") 
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    // GET /api/users - Get all users
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         List<UserResponseDto> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    // GET /api/users/{id} - Get user by ID
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         try {
@@ -36,21 +34,18 @@ public class UserController {
         }
     }
 
-    // POST /api/users - Create a new user
     @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody User user) { // Using User entity directly for simplicity
+    public ResponseEntity<?> createUser(@RequestBody User user) { 
         try {
             UserResponseDto createdUser = userService.createUser(user);
-            // Return 201 Created status with the created user DTO
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) { // Catch broader exceptions during creation if needed
+        } catch (Exception e) { 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
         }
     }
 
-    // PUT /api/users/{id} - Update an existing user
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         try {
@@ -65,17 +60,15 @@ public class UserController {
         }
     }
 
-    // DELETE /api/users/{id} - Delete a user
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
-            // Return 204 No Content on successful deletion
             return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Avoid sending error message in body for DELETE
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); 
         }
     }
 }

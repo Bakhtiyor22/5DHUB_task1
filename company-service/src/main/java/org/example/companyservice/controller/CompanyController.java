@@ -12,20 +12,18 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/companies") // Base path for company endpoints
+@RequestMapping("/api/companies")
 public class CompanyController {
 
     @Autowired
     private CompanyService companyService;
 
-    // GET /api/companies - Get all companies
     @GetMapping
     public ResponseEntity<List<CompanyResponseDto>> getAllCompanies() {
         List<CompanyResponseDto> companies = companyService.getAllCompanies();
         return ResponseEntity.ok(companies);
     }
 
-    // GET /api/companies/{id} - Get company by ID
     @GetMapping("/{id}")
     public ResponseEntity<CompanyResponseDto> getCompanyById(@PathVariable Long id) {
         try {
@@ -36,9 +34,8 @@ public class CompanyController {
         }
     }
 
-    // POST /api/companies - Create a new company
     @PostMapping
-    public ResponseEntity<?> createCompany(@RequestBody Company company) { // Using Company entity directly
+    public ResponseEntity<?> createCompany(@RequestBody Company company) { 
         try {
             CompanyResponseDto createdCompany = companyService.createCompany(company);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdCompany);
@@ -49,7 +46,6 @@ public class CompanyController {
         }
     }
 
-    // PUT /api/companies/{id} - Update an existing company
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCompany(@PathVariable Long id, @RequestBody Company companyDetails) {
         try {
@@ -64,7 +60,6 @@ public class CompanyController {
         }
     }
 
-    // DELETE /api/companies/{id} - Delete a company
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
         try {
