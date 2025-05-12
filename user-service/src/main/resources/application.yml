@@ -1,16 +1,11 @@
 spring:
     application:
         name: user-service
-server:
-    port: 8080
-
-spring:
     datasource:
         url: jdbc:postgresql://localhost:5432/user_db 
         username: user_admin # Placeholder
         password: password # Placeholder
         driver-class-name: org.postgresql.Driver
-
     jpa:
         hibernate:
             ddl-auto: update
@@ -19,8 +14,10 @@ spring:
             hibernate:
                 format_sql: true
                 dialect: org.hibernate.dialect.PostgreSQLDialect
-
-COMPANY_SERVICE_URL: http://localhost:8080 
+server:
+    port: 8090
+app:
+    company-service-url: http://localhost:8091
 
 management:
     endpoints:
