@@ -1,5 +1,6 @@
 package org.example.companyservice.controller;
 
+import org.example.companyservice.dto.CompanyRequestDto;
 import org.example.companyservice.dto.CompanyResponseDto;
 import org.example.companyservice.entity.Company; // Use Entity for request body binding simplicity
 import org.example.companyservice.service.CompanyService;
@@ -35,9 +36,9 @@ public class CompanyController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createCompany(@RequestBody Company company) { 
+    public ResponseEntity<?> createCompany(@RequestBody CompanyRequestDto companyRequestDto) { // Changed Company to CompanyRequestDto
         try {
-            CompanyResponseDto createdCompany = companyService.createCompany(company);
+            CompanyResponseDto createdCompany = companyService.createCompany(companyRequestDto); // Pass DTO
             return ResponseEntity.status(HttpStatus.CREATED).body(createdCompany);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -47,9 +48,9 @@ public class CompanyController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCompany(@PathVariable Long id, @RequestBody Company companyDetails) {
+    public ResponseEntity<?> updateCompany(@PathVariable Long id, @RequestBody CompanyRequestDto companyRequestDto) { // Changed Company to CompanyRequestDto
         try {
-            CompanyResponseDto updatedCompany = companyService.updateCompany(id, companyDetails);
+            CompanyResponseDto updatedCompany = companyService.updateCompany(id, companyRequestDto); // Pass DTO
             return ResponseEntity.ok(updatedCompany);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();

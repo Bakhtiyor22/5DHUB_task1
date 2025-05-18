@@ -1,101 +1,79 @@
 package org.example.userservice.service;
 
-import org.example.userservice.dto.CompanyDto;
-import org.example.userservice.dto.UserResponseDto;
+import org.example.userservice.company.CompanyClient;
+import org.example.userservice.dto.*;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final CompanyClient companyClient;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Value("${COMPANY_SERVICE_URL}") 
-    private String companyServiceUrl;
+    public UserService(UserRepository userRepository, CompanyClient companyClient, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.companyClient = companyClient;
+        this.userMapper = userMapper;
+    }
 
     public List<UserResponseDto> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::mapUserToResponseDto)
+                .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
     public UserResponseDto getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-        return mapUserToResponseDto(user);
+        User user = userRepository.findById(id.toString())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return mapToResponseDto(user);
     }
 
-    public UserResponseDto createUser(User user) {
-        if (user.getCompanyId() == null) {
-            throw new IllegalArgumentException("Company ID must be provided");
+    public UserResponseDto createUser(UserRequestDto userRequestDto) {
+        if (userRequestDto.companyDto() == null || userRequestDto.companyDto().getId() == null) {
+            throw new IllegalArgumentException("Company ID is required");
         }
-
+        
+        CompanyDto company = companyClient.getCompanyById(userRequestDto.companyDto().getId());
+        
+        User user = userMapper.toUser(userRequestDto);
+        
         User savedUser = userRepository.save(user);
-        return mapUserToResponseDto(savedUser);
+        return mapToResponseDto(savedUser);
     }
 
-    @Transactional
-    public UserResponseDto updateUser(Long id, User userDetails) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
-
-        if (userDetails.getCompanyId() == null) {
-            throw new IllegalArgumentException("Company ID must be provided");
+    public UserResponseDto updateUser(Long id, UserRequestDto userRequestDto) {
+        User existingUser = userRepository.findById(id.toString())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        
+        existingUser.setFirstName(userRequestDto.firstName());
+        existingUser.setLastName(userRequestDto.lastName());
+        existingUser.setPhoneNumber(userRequestDto.phoneNumber());
+        
+        if (userRequestDto.companyDto() != null &&
+            !userRequestDto.companyDto().getId().equals(existingUser.getCompanyId())) {
+            CompanyDto company = companyClient.getCompanyById(userRequestDto.companyDto().getId());
+            existingUser.setCompanyId(userRequestDto.companyDto().getId());
         }
-
-        existingUser.setFirstName(userDetails.getFirstName());
-        existingUser.setLastName(userDetails.getLastName());
-        existingUser.setPhoneNumber(userDetails.getPhoneNumber());
-        existingUser.setCompanyId(userDetails.getCompanyId());
-
+        
         User updatedUser = userRepository.save(existingUser);
-        return mapUserToResponseDto(updatedUser);
+        return mapToResponseDto(updatedUser);
     }
 
-    @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException("User not found with id: " + id);
+        if (!userRepository.existsById(id.toString())) {
+            throw new RuntimeException("User not found with id: " + id);
         }
-        userRepository.deleteById(id);
+        userRepository.deleteById(id.toString());
     }
-
-    private UserResponseDto mapUserToResponseDto(User user) {
-        CompanyDto companyDto = getCompanyById(user.getCompanyId());
-        return new UserResponseDto(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhoneNumber(),
-                companyDto
-        );
-    }
-
-    private CompanyDto getCompanyById(Long companyId) {
-        String url = companyServiceUrl + "/api/companies/" + companyId;
-        try {
-            CompanyDto company = restTemplate.getForObject(url, CompanyDto.class);
-            if (company == null) {
-                System.err.println("Warning: Company not found for ID: " + companyId + " at URL: " + url);
-                return new CompanyDto(companyId, "Company Not Found", null);
-            }
-            return company;
-        } catch (Exception e) {
-            System.err.println("Error fetching company details for ID: " + companyId + " from URL: " + url + ". Error: " + e.getMessage());
-            return new CompanyDto(companyId, "Error Fetching Company", null);
-        }
+    
+    private UserResponseDto mapToResponseDto(User user) {
+        CompanyDto companyDto = companyClient.getCompanyById(user.getCompanyId());
+        return userMapper.fromUserResponseDto(user, companyDto);
     }
 }

@@ -1,30 +1,28 @@
 package org.example.userservice.entity;
 
-import jakarta.persistence.*;
 import lombok.Data; // Lombok annotation for getters, setters, toString, etc.
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.Setter;
 
-@Entity
-@Table(name = "users") // "user" is often a reserved keyword in SQL
-@Data
-@NoArgsConstructor
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Getter
+@Setter
+@Document
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
+    private String id;
     private String firstName;
-
-    @Column(nullable = false)
     private String lastName;
-
-    @Column(unique = true)
     private String phoneNumber;
-
-    @Column(nullable = false)
     private Long companyId;
 }
