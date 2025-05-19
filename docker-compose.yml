@@ -5,8 +5,8 @@ services:
     container_name: ms_pg_sql
     image: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 2210
+      POSTGRES_USER: company
+      POSTGRES_PASSWORD: company
       PGDATA: /data/postgres
     volumes:
       - postgres:/data/postgres
