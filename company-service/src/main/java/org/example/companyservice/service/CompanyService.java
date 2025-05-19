@@ -21,15 +21,14 @@ import java.util.stream.Collectors;
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
-    private final RestTemplate restTemplate;
     private final CompanyMapper companyMapper;
     private final UserClient userClient;
 
 
-    public CompanyService(CompanyRepository companyRepository, RestTemplate restTemplate, CompanyMapper companyMapper) {
+    public CompanyService(CompanyRepository companyRepository, RestTemplate restTemplate, CompanyMapper companyMapper, UserClient userClient) {
         this.companyRepository = companyRepository;
-        this.restTemplate = restTemplate;
         this.companyMapper = companyMapper;
+        this.userClient = userClient;
     }
 
     @Transactional(readOnly = true)
@@ -91,8 +90,16 @@ public class CompanyService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        return companyMapper.toCompanyResponseDto(company, employees); // Use mapper
+        return companyMapper.toCompanyResponseDto(company, employees);
     }
 
+    private UserDto fetchUserById(Long userId) {
+        try {
+            return userClient.getUserById(userId);
+        } catch (Exception e) {
+            System.err.println("Error fetching user with id " + userId + ": " + e.getMessage());
+            return null;
+        }
+    }
 
 }
