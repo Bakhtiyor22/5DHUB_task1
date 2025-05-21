@@ -8,7 +8,6 @@ import org.example.companyservice.entity.CompanyMapper;
 import org.example.companyservice.repository.CompanyRepository;
 import org.example.companyservice.user.UserClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -25,7 +24,7 @@ public class CompanyService {
     private final UserClient userClient;
 
 
-    public CompanyService(CompanyRepository companyRepository, RestTemplate restTemplate, CompanyMapper companyMapper, UserClient userClient) {
+    public CompanyService(CompanyRepository companyRepository, CompanyMapper companyMapper, UserClient userClient) {
         this.companyRepository = companyRepository;
         this.companyMapper = companyMapper;
         this.userClient = userClient;
@@ -95,7 +94,7 @@ public class CompanyService {
 
     private UserDto fetchUserById(Long userId) {
         try {
-            return userClient.getUserById(userId);
+            return userClient.getUserById(userId.toString());
         } catch (Exception e) {
             System.err.println("Error fetching user with id " + userId + ": " + e.getMessage());
             return null;
