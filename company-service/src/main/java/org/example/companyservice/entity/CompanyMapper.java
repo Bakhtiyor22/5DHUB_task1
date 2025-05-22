@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class CompanyMapper {
@@ -18,11 +20,11 @@ public class CompanyMapper {
         Company company = new Company();
         company.setName(requestDto.getName());
         company.setBudget(requestDto.getBudget());
-        company.setEmployeeIds(requestDto.getEmployeeIds() != null ? requestDto.getEmployeeIds() : Collections.emptyList());
+        company.setEmployeeIds(Collections.emptyList());
         return company;
     }
 
-    public CompanyResponseDto toCompanyResponseDto(Company company, List<UserDto> employees) {
+    public CompanyResponseDto toCompanyResponseDto(Company company, List<Optional<UserDto>> employees) {
         if (company == null) {
             return null;
         }
@@ -30,7 +32,10 @@ public class CompanyMapper {
                 company.getId(),
                 company.getName(),
                 company.getBudget(),
-                employees
+                employees.stream()
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList())
         );
     }
 }

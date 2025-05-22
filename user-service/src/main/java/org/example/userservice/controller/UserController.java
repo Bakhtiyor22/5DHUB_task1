@@ -1,9 +1,9 @@
 package org.example.userservice.controller;
 
+import org.example.userservice.dto.CompanyAssignmentRequestDto;
 import org.example.userservice.dto.UserRequestDto;
 import org.example.userservice.dto.UserResponseDto;
 import org.example.userservice.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +14,11 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
@@ -24,48 +27,26 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
-        try {
-            UserResponseDto user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
+        UserResponseDto user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
-@PostMapping
-public ResponseEntity<?> createUser(@RequestBody UserRequestDto userRequestDto) { 
-    try {
+    @PostMapping
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userRequestDto) {
         UserResponseDto createdUser = userService.createUser(userRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
-    } catch (IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    } catch (Exception e) { 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
     }
-}
 
-@PutMapping("/{id}")
-public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserRequestDto userRequestDto) {
-    try {
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
         UserResponseDto updatedUser = userService.updateUser(id, userRequestDto);
         return ResponseEntity.ok(updatedUser);
-    } catch (RuntimeException e) {
-        return ResponseEntity.notFound().build();
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + e.getMessage());
     }
-}
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); 
-        }
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

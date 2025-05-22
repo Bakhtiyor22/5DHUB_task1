@@ -2,13 +2,11 @@ package org.example.companyservice.controller;
 
 import org.example.companyservice.dto.CompanyRequestDto;
 import org.example.companyservice.dto.CompanyResponseDto;
-import org.example.companyservice.entity.Company; // Use Entity for request body binding simplicity
+import org.example.companyservice.dto.EmployeeAssignmentRequestDto; // For request body
 import org.example.companyservice.service.CompanyService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 
@@ -30,49 +28,33 @@ public class CompanyController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CompanyResponseDto> getCompanyById(@PathVariable Long id) {
-        try {
-            CompanyResponseDto company = companyService.getCompanyById(id);
-            return ResponseEntity.ok(company);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        CompanyResponseDto company = companyService.getCompanyById(id);
+        return ResponseEntity.ok(company);
     }
 
     @PostMapping
-    public ResponseEntity<?> createCompany(@RequestBody CompanyRequestDto companyRequestDto) { // Changed Company to CompanyRequestDto
-        try {
-            CompanyResponseDto createdCompany = companyService.createCompany(companyRequestDto); // Pass DTO
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCompany);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating company: " + e.getMessage());
-        }
+    public ResponseEntity<CompanyResponseDto> createCompany(@RequestBody CompanyRequestDto companyRequestDto) {
+        CompanyResponseDto createdCompany = companyService.createCompany(companyRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCompany);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCompany(@PathVariable Long id, @RequestBody CompanyRequestDto companyRequestDto) { // Changed Company to CompanyRequestDto
-        try {
-            CompanyResponseDto updatedCompany = companyService.updateCompany(id, companyRequestDto); // Pass DTO
-            return ResponseEntity.ok(updatedCompany);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating company: " + e.getMessage());
-        }
+    public ResponseEntity<CompanyResponseDto> updateCompany(@PathVariable Long id, @RequestBody CompanyRequestDto companyRequestDto) {
+        CompanyResponseDto updatedCompany = companyService.updateCompany(id, companyRequestDto);
+        return ResponseEntity.ok(updatedCompany);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
-        try {
-            companyService.deleteCompany(id);
-            return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+    @PostMapping("/{companyId}/employees")
+    public ResponseEntity<CompanyResponseDto> assignEmployeeToCompany(
+            @PathVariable Long companyId,
+            @RequestBody EmployeeAssignmentRequestDto request) {
+        CompanyResponseDto updatedCompany = companyService.assignEmployee(companyId, request.userId());
+        return ResponseEntity.ok(updatedCompany);
     }
+
+     @DeleteMapping("/{id}")
+     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
+         companyService.deleteCompany(id);
+         return ResponseEntity.noContent().build();
+     }
 }

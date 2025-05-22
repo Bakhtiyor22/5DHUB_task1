@@ -12,5 +12,5 @@ import java.util.List;
 public class CompanyRequestDto {
     private String name;
     private Double budget;
-    private List<Long> employeeIds; // Or List<UserDto> if you prefer to send full user objects in request
+    private List<String> employeeIds;
 }

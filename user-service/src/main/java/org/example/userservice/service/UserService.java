@@ -3,6 +3,8 @@ package org.example.userservice.service;
 import org.example.userservice.company.CompanyClient;
 import org.example.userservice.dto.*;
 import org.example.userservice.entity.User;
+import org.example.userservice.exception.BadRequestException;
+import org.example.userservice.exception.ResourceNotFoundException;
 import org.example.userservice.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,52 +30,63 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserResponseDto getUserById(Long id) {
-        User user = userRepository.findById(id.toString())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    public UserResponseDto getUserById(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return mapToResponseDto(user);
     }
 
     public UserResponseDto createUser(UserRequestDto userRequestDto) {
-        if (userRequestDto.companyDto() == null || userRequestDto.companyDto().getId() == null) {
-            throw new IllegalArgumentException("Company ID is required");
+        if (userRequestDto.firstName() == null || userRequestDto.firstName().isEmpty()) {
+            throw new BadRequestException("Username is required");
         }
-        
-        CompanyDto company = companyClient.getCompanyById(userRequestDto.companyDto().getId());
-        
-        User user = userMapper.toUser(userRequestDto);
-        
+        User user = new User();
+        user.setFirstName(userRequestDto.firstName());
+        user.setLastName(userRequestDto.lastName());
+        user.setPhoneNumber(userRequestDto.phoneNumber());
+
         User savedUser = userRepository.save(user);
-        return mapToResponseDto(savedUser);
+        return userMapper.fromUserResponseDto(savedUser, null);
     }
 
-    public UserResponseDto updateUser(Long id, UserRequestDto userRequestDto) {
-        User existingUser = userRepository.findById(id.toString())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        
-        existingUser.setFirstName(userRequestDto.firstName());
-        existingUser.setLastName(userRequestDto.lastName());
-        existingUser.setPhoneNumber(userRequestDto.phoneNumber());
-        
-        if (userRequestDto.companyDto() != null &&
-            !userRequestDto.companyDto().getId().equals(existingUser.getCompanyId())) {
-            CompanyDto company = companyClient.getCompanyById(userRequestDto.companyDto().getId());
-            existingUser.setCompanyId(userRequestDto.companyDto().getId());
+    public UserResponseDto updateUser(String id, UserRequestDto userRequestDto) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        if (userRequestDto.firstName() != null && !userRequestDto.firstName().trim().isEmpty()) {
+            existingUser.setFirstName(userRequestDto.firstName());
         }
-        
+        if (userRequestDto.lastName() != null && !userRequestDto.lastName().trim().isEmpty()) {
+            existingUser.setLastName(userRequestDto.lastName());
+        }
+        if (userRequestDto.phoneNumber() != null) {
+            existingUser.setPhoneNumber(userRequestDto.phoneNumber());
+        }
+
         User updatedUser = userRepository.save(existingUser);
-        return mapToResponseDto(updatedUser);
+        CompanyDto companyDto = null;
+        if (updatedUser.getCompanyId() != null) {
+            try {
+                companyDto = companyClient.getCompanyById(updatedUser.getCompanyId());
+            } catch (Exception e) {
+                System.err.println("Failed to fetch company details for companyId " + updatedUser.getCompanyId() + " for user " + updatedUser.getId() + ". Error: " + e.getMessage());
+            }
+        }
+        return userMapper.fromUserResponseDto(updatedUser, companyDto);
     }
 
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id.toString())) {
-            throw new RuntimeException("User not found with id: " + id);
+    public void deleteUser(String id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
-        userRepository.deleteById(id.toString());
+        userRepository.deleteById(id);
     }
     
     private UserResponseDto mapToResponseDto(User user) {
-        CompanyDto companyDto = companyClient.getCompanyById(user.getCompanyId());
+        CompanyDto companyDto = null;
+        if (user.getCompanyId() != null) {
+            companyDto = companyClient.getCompanyById(user.getCompanyId());
+        }
         return userMapper.fromUserResponseDto(user, companyDto);
     }
 }

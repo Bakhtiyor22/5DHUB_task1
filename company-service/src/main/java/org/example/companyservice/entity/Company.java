@@ -27,5 +27,5 @@ public class Company {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "company_employee_ids", joinColumns = @JoinColumn(name = "company_id"))
     @Column(name = "employee_id")
-    private List<Long> employeeIds = new ArrayList<>();
+    private List<String> employeeIds = new ArrayList<>();
 }
