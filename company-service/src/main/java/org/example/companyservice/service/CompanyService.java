@@ -1,9 +1,6 @@
 package org.example.companyservice.service;
 
-import org.example.companyservice.dto.CompanyAssignmentRequestDto; // For calling user-service
-import org.example.companyservice.dto.CompanyRequestDto;
-import org.example.companyservice.dto.CompanyResponseDto;
-import org.example.companyservice.dto.UserDto;
+import org.example.companyservice.dto.*;
 import org.example.companyservice.entity.Company;
 import org.example.companyservice.entity.CompanyMapper;
 import org.example.companyservice.exception.BadRequestException;
@@ -41,6 +38,13 @@ public class CompanyService {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Company not found with id: " + id));
         return mapEntityToResponseDto(company);
+    }
+
+    public CompanyDto getSimpleCompanyById(Long id) {
+        Company company = companyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found with id: " + id));
+
+        return new CompanyDto(company.getId(), company.getName(), company.getBudget());
     }
 
     public CompanyResponseDto createCompany(CompanyRequestDto companyRequestDto) {

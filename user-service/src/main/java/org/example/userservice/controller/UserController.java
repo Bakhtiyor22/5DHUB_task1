@@ -38,7 +38,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
         UserResponseDto updatedUser = userService.updateUser(id, userRequestDto);
         return ResponseEntity.ok(updatedUser);
@@ -48,5 +48,19 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{userId}/company")
+    public ResponseEntity<UserResponseDto> assignCompanyToUser(
+            @PathVariable String userId,
+            @RequestBody CompanyAssignmentRequestDto request) {
+        UserResponseDto updatedUser = userService.assignCompanyToUser(userId, request.companyId());
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/{userId}/company")
+    public ResponseEntity<UserResponseDto> removeCompanyFromUser(@PathVariable String userId) {
+        UserResponseDto updatedUser = userService.removeCompanyFromUser(userId);
+        return ResponseEntity.ok(updatedUser);
     }
 }

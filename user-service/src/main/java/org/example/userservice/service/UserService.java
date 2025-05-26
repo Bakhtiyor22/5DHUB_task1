@@ -75,17 +75,39 @@ public class UserService {
         return userMapper.fromUserResponseDto(updatedUser, companyDto);
     }
 
+    public UserResponseDto assignCompanyToUser(String userId, Long companyId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        user.setCompanyId(companyId);
+        User updatedUser = userRepository.save(user);
+        return mapToResponseDto(updatedUser);
+    }
+
+    public UserResponseDto removeCompanyFromUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        user.setCompanyId(null);
+        User updatedUser = userRepository.save(user);
+        return mapToResponseDto(updatedUser);
+    }
+
     public void deleteUser(String id) {
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }
-    
+
     private UserResponseDto mapToResponseDto(User user) {
         CompanyDto companyDto = null;
         if (user.getCompanyId() != null) {
-            companyDto = companyClient.getCompanyById(user.getCompanyId());
+            try {
+                companyDto = companyClient.getCompanyById(user.getCompanyId());
+            } catch (Exception e) {
+                    System.err.println("Skipping company details for user " + user.getId() +
+                        " due to service unavailability: " + e.getMessage());
+            }
         }
         return userMapper.fromUserResponseDto(user, companyDto);
     }
