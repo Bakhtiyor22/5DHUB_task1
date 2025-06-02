@@ -4,11 +4,12 @@ import org.example.userservice.dto.CompanyAssignmentRequestDto;
 import org.example.userservice.dto.UserRequestDto;
 import org.example.userservice.dto.UserResponseDto;
 import org.example.userservice.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -21,46 +22,41 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
-        List<UserResponseDto> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    public Page<UserResponseDto> getAllUsers(Pageable pageable) {
+        return userService.getAllUsers(pageable);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
-        UserResponseDto user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
+    public UserResponseDto getUserById(@PathVariable String id) {
+        return userService.getUserById(id);
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userRequestDto) {
-        UserResponseDto createdUser = userService.createUser(userRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponseDto createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
+        return userService.createUser(userRequestDto);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
-        UserResponseDto updatedUser = userService.updateUser(id, userRequestDto);
-        return ResponseEntity.ok(updatedUser);
+    @PutMapping("/{id}")
+    public UserResponseDto updateUser(@PathVariable String id, @Valid @RequestBody UserRequestDto userRequestDto) {
+        return userService.updateUser(id, userRequestDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{userId}/company")
-    public ResponseEntity<UserResponseDto> assignCompanyToUser(
+    public UserResponseDto assignCompanyToUser(
             @PathVariable String userId,
-            @RequestBody CompanyAssignmentRequestDto request) {
-        UserResponseDto updatedUser = userService.assignCompanyToUser(userId, request.companyId());
-        return ResponseEntity.ok(updatedUser);
+            @Valid @RequestBody CompanyAssignmentRequestDto request) {
+        return userService.assignCompanyToUser(userId, request.companyId());
     }
 
     @DeleteMapping("/{userId}/company")
-    public ResponseEntity<UserResponseDto> removeCompanyFromUser(@PathVariable String userId) {
-        UserResponseDto updatedUser = userService.removeCompanyFromUser(userId);
-        return ResponseEntity.ok(updatedUser);
+    public UserResponseDto removeCompanyFromUser(@PathVariable String userId) {
+        return userService.removeCompanyFromUser(userId);
     }
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.util.ArrayList; 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,7 +24,7 @@ public class Company {
 
     private Double budget;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "company_employee_ids", joinColumns = @JoinColumn(name = "company_id"))
     @Column(name = "employee_id")
     private List<String> employeeIds = new ArrayList<>();

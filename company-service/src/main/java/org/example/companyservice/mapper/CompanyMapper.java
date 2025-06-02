@@ -1,8 +1,9 @@
-package org.example.companyservice.entity;
+package org.example.companyservice.mapper;
 
 import org.example.companyservice.dto.CompanyRequestDto;
 import org.example.companyservice.dto.CompanyResponseDto;
 import org.example.companyservice.dto.UserDto;
+import org.example.companyservice.entity.Company;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

@@ -1,5 +1,8 @@
-package org.example.userservice.dto;
+package org.example.userservice.mapper;
 
+import org.example.userservice.dto.CompanyDto;
+import org.example.userservice.dto.UserRequestDto;
+import org.example.userservice.dto.UserResponseDto;
 import org.example.userservice.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -19,5 +22,5 @@ public class UserMapper {
                 user.getPhoneNumber(),
                 Optional.ofNullable(companyDto)
         );
-    }   
+    }
 }
