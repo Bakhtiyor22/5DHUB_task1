@@ -84,11 +84,11 @@ public class CompanyServiceImpl implements CompanyService {
     public CompanyResponseDto assignEmployee(Long companyId, String userId) {
         logger.info("Assigning user " + userId + " to company " + companyId);
 
-        List<Company> companies = companyRepository.findAll();
-        validateUserExists(userId);
-        validateEmployeeNotAlreadyAssigned(companies, userId);
-
+        validateUserExistsAndNotAssigned(userId);
         Company company = findCompanyByIdOrThrow(companyId);
+
+//        validateEmployeeNotInThisCompany(company, userId);
+
         company.getEmployeeIds().add(userId);
         companyRepository.save(company);
 
@@ -158,11 +158,19 @@ public class CompanyServiceImpl implements CompanyService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId + ", cannot assign to company."));
     }
 
-    private void validateEmployeeNotAlreadyAssigned(List<Company> company, String userId) {
-        boolean isAlreadyAssigned = company.stream()
-                .anyMatch(c -> c.getEmployeeIds() != null && c.getEmployeeIds().contains(userId));
-        if (isAlreadyAssigned) {
-            throw new BadRequestException("User " + userId + " is already assigned to a company.");
+    private void validateUserExistsAndNotAssigned(String userId) {
+        validateUserExists(userId);
+
+        Optional<Company> assignedCompany = companyRepository.findByEmployeeId(userId);
+        if (assignedCompany.isPresent()) {
+            throw new BadRequestException("User " + userId + " is already assigned to company " +
+                    assignedCompany.get().getId() + ". Remove from current company first.");
+        }
+    }
+
+    private void validateEmployeeNotInThisCompany(Company company, String userId) {
+        if (company.getEmployeeIds() != null && company.getEmployeeIds().contains(userId)) {
+            throw new BadRequestException("User " + userId + " is already an employee of company " + company.getId());
         }
     }
 
@@ -198,17 +206,19 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     private CompanyResponseDto mapEntityToResponseDto(Company company) {
-        List<Optional<UserDto>> employees = fetchEmployeeDetails(company);
+        List<UserDto> employees = fetchEmployeeDetails(company);
         return companyMapper.toCompanyResponseDto(company, employees);
     }
 
-    private List<Optional<UserDto>> fetchEmployeeDetails(Company company) {
+    private List<UserDto> fetchEmployeeDetails(Company company) {
         if (company.getEmployeeIds() == null || company.getEmployeeIds().isEmpty()) {
             return Collections.emptyList();
         }
 
         return company.getEmployeeIds().stream()
                 .map(this::fetchUserByIdSafe)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 

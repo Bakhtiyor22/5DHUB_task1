@@ -77,7 +77,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto assignCompanyToUser(String userId, Long companyId) {
         logger.info("Assigning company " + companyId + " to user " + userId);
-        User user = findUserByIdOrThrow(userId);
+        User user = findUserByIdOrThrow(userId); // ✅ Already using reusable method
+
+        validateCompanyExists(companyId);
+
         user.setCompanyId(companyId);
         User updatedUser = userRepository.save(user);
         return mapToResponseDto(updatedUser);
@@ -95,10 +98,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(String id) {
         logger.info("Deleting user with id: " + id);
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
+
+        User user = findUserByIdOrThrow(id);
+
+        if (user.getCompanyId() != null) {
+            try {
+                companyClient.removeEmployeeFromCompany(user.getCompanyId(), id);
+            } catch (Exception e) {
+                logger.warning("Failed to remove user from company during deletion: " + e.getMessage());
+            }
         }
+
         userRepository.deleteById(id);
+        logger.info("Successfully deleted user with id: " + id);
     }
 
     private User findUserByIdOrThrow(String id) {
@@ -145,4 +157,14 @@ public class UserServiceImpl implements UserService {
         }
         return userMapper.fromUserResponseDto(user, companyDto);
     }
+
+    private void validateCompanyExists(Long companyId) {
+        try {
+            companyClient.getCompanyById(companyId);
+        } catch (Exception e) {
+            logger.warning("Company validation failed for companyId " + companyId + ": " + e.getMessage());
+            throw new ResourceNotFoundException("Company not found with id: " + companyId + ", cannot assign to user.");
+        }
+    }
+
 }

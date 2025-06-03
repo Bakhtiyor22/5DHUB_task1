@@ -26,7 +26,7 @@ public class CompanyMapper {
         return company;
     }
 
-    public CompanyResponseDto toCompanyResponseDto(Company company, List<Optional<UserDto>> employees) {
+    public CompanyResponseDto toCompanyResponseDto(Company company, List<UserDto> employees) {
         if (company == null) {
             return null;
         }
@@ -34,10 +34,7 @@ public class CompanyMapper {
                 company.getId(),
                 company.getName(),
                 company.getBudget(),
-                employees.stream()
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList())
+                employees != null ? employees : Collections.emptyList()
         );
     }
 }
