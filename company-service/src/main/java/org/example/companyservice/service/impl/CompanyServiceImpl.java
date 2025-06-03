@@ -56,11 +56,11 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public CompanyResponseDto createCompany(CompanyRequestDto companyRequestDto) {
+    public CompanyResponseDto createCompany(CompanyCreateRequestDto companyCreateRequestDto) {
         logger.info("Creating new company");
-        validateCompanyRequest(companyRequestDto, null);
+        validateCompanyCreateRequest(companyCreateRequestDto);
 
-        Company company = companyMapper.toCompany(companyRequestDto);
+        Company company = companyMapper.toCompany(companyCreateRequestDto);
         Company savedCompany = companyRepository.save(company);
 
         logger.info("Created company with id: " + savedCompany.getId());
@@ -68,12 +68,12 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public CompanyResponseDto updateCompany(Long id, CompanyRequestDto companyRequestDto) {
+    public CompanyResponseDto updateCompany(Long id, CompanyUpdateRequestDto companyUpdateRequestDto) {
         logger.info("Updating company with id: " + id);
         Company existingCompany = findCompanyByIdOrThrow(id);
-        validateCompanyRequest(companyRequestDto, id);
+        validateCompanyUpdateRequest(id, companyUpdateRequestDto);
 
-        updateCompanyFields(existingCompany, companyRequestDto);
+        updateCompanyFields(existingCompany, companyUpdateRequestDto);
         Company updatedCompany = companyRepository.save(existingCompany);
 
         logger.info("Updated company with id: " + id);
@@ -84,10 +84,11 @@ public class CompanyServiceImpl implements CompanyService {
     public CompanyResponseDto assignEmployee(Long companyId, String userId) {
         logger.info("Assigning user " + userId + " to company " + companyId);
 
-        Company company = findCompanyByIdOrThrow(companyId);
+        List<Company> companies = companyRepository.findAll();
         validateUserExists(userId);
-        validateEmployeeNotAlreadyAssigned(company, userId);
+        validateEmployeeNotAlreadyAssigned(companies, userId);
 
+        Company company = findCompanyByIdOrThrow(companyId);
         company.getEmployeeIds().add(userId);
         companyRepository.save(company);
 
@@ -95,6 +96,28 @@ public class CompanyServiceImpl implements CompanyService {
 
         logger.info("Successfully assigned user " + userId + " to company " + companyId);
         return mapEntityToResponseDto(company);
+    }
+
+    @Override
+    public void removeEmployee(Long companyId, String userId) {
+        logger.info("Removing user " + userId + " from company " + companyId);
+        Company company = findCompanyByIdOrThrow(companyId);
+
+        if (company.getEmployeeIds() == null || !company.getEmployeeIds().contains(userId)) {
+            throw new BadRequestException("User " + userId + " is not an employee of company " + companyId);
+        }
+
+        company.getEmployeeIds().remove(userId);
+        companyRepository.save(company);
+
+        try {
+            userClient.removeCompanyFromUser(userId);
+        } catch (Exception e) {
+            logger.warning("Failed to remove company assignment from user in user-service for userId " + userId + ": " + e.getMessage());
+            throw new BadRequestException("Failed to remove company assignment from user in user-service for userId " + userId);
+        }
+
+        logger.info("Successfully removed user " + userId + " from company " + companyId);
     }
 
     @Override
@@ -115,19 +138,16 @@ public class CompanyServiceImpl implements CompanyService {
                 .orElseThrow(() -> new ResourceNotFoundException("Company not found with id: " + id));
     }
 
-    private void validateCompanyRequest(CompanyRequestDto companyRequestDto, Long companyId) {
-        if (companyRequestDto.getName() == null || companyRequestDto.getName().trim().isEmpty()) {
-            throw new BadRequestException("Company name cannot be empty");
+    private void validateCompanyCreateRequest(CompanyCreateRequestDto companyCreateRequestDto) {
+        if (companyRepository.findByName(companyCreateRequestDto.getName()).isPresent()) {
+            throw new DuplicateResourceException("Company name already exists");
         }
-        if (companyRequestDto.getBudget() != null && companyRequestDto.getBudget() < 0) {
-            throw new BadRequestException("Company budget cannot be negative");
-        }
+    }
 
-        Optional<Company> existingCompany = companyRepository.findByName(companyRequestDto.getName());
-
-        if (existingCompany.isPresent()) {
-            // For create (companyId is null) or if the found company is different than the one being updated
-            if (companyId == null || !existingCompany.get().getId().equals(companyId)) {
+    private void validateCompanyUpdateRequest(Long companyId, CompanyUpdateRequestDto companyUpdateRequestDto) {
+        if (companyUpdateRequestDto.getName() != null && !companyUpdateRequestDto.getName().trim().isEmpty()) {
+            Optional<Company> existingCompany = companyRepository.findByName(companyUpdateRequestDto.getName());
+            if (existingCompany.isPresent() && !existingCompany.get().getId().equals(companyId)) {
                 throw new DuplicateResourceException("Company name already exists");
             }
         }
@@ -138,18 +158,23 @@ public class CompanyServiceImpl implements CompanyService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId + ", cannot assign to company."));
     }
 
-    private void validateEmployeeNotAlreadyAssigned(Company company, String userId) {
-        if (company.getEmployeeIds() != null && company.getEmployeeIds().contains(userId)) {
-            throw new BadRequestException("User " + userId + " is already an employee of company " + company.getId());
+    private void validateEmployeeNotAlreadyAssigned(List<Company> company, String userId) {
+        boolean isAlreadyAssigned = company.stream()
+                .anyMatch(c -> c.getEmployeeIds() != null && c.getEmployeeIds().contains(userId));
+        if (isAlreadyAssigned) {
+            throw new BadRequestException("User " + userId + " is already assigned to a company.");
         }
     }
 
-    private void updateCompanyFields(Company company, CompanyRequestDto companyRequestDto) {
-        company.setName(companyRequestDto.getName());
-        company.setBudget(companyRequestDto.getBudget());
-
-        if (companyRequestDto.getEmployeeIds() != null) {
-            company.setEmployeeIds(companyRequestDto.getEmployeeIds());
+    private void updateCompanyFields(Company company, CompanyUpdateRequestDto companyUpdateRequestDto) {
+        if (companyUpdateRequestDto.getName() != null && !companyUpdateRequestDto.getName().trim().isEmpty()) {
+            company.setName(companyUpdateRequestDto.getName());
+        }
+        if (companyUpdateRequestDto.getBudget() != null) {
+            company.setBudget(companyUpdateRequestDto.getBudget());
+        }
+        if (companyUpdateRequestDto.getEmployeeIds() != null) {
+            company.setEmployeeIds(companyUpdateRequestDto.getEmployeeIds());
         }
     }
 

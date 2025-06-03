@@ -1,9 +1,6 @@
 package org.example.companyservice.controller;
 
-import org.example.companyservice.dto.CompanyDto;
-import org.example.companyservice.dto.CompanyRequestDto;
-import org.example.companyservice.dto.CompanyResponseDto;
-import org.example.companyservice.dto.EmployeeAssignmentRequestDto;
+import org.example.companyservice.dto.*;
 import org.example.companyservice.service.CompanyService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,13 +36,13 @@ public class CompanyController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CompanyResponseDto createCompany(@Valid @RequestBody CompanyRequestDto companyRequestDto) {
-        return companyService.createCompany(companyRequestDto);
+    public CompanyResponseDto createCompany(@Valid @RequestBody CompanyCreateRequestDto companyCreateRequestDto) {
+        return companyService.createCompany(companyCreateRequestDto);
     }
 
     @PutMapping("/{id}")
-    public CompanyResponseDto updateCompany(@PathVariable Long id, @Valid @RequestBody CompanyRequestDto companyRequestDto) {
-        return companyService.updateCompany(id, companyRequestDto);
+    public CompanyResponseDto updateCompany(@PathVariable Long id, @Valid @RequestBody CompanyUpdateRequestDto companyUpdateRequestDto) {
+        return companyService.updateCompany(id, companyUpdateRequestDto);
     }
 
     @PostMapping("/{companyId}/employees")
@@ -53,6 +50,14 @@ public class CompanyController {
             @PathVariable Long companyId,
             @Valid @RequestBody EmployeeAssignmentRequestDto request) {
         return companyService.assignEmployee(companyId, request.userId());
+    }
+
+    @DeleteMapping("/{companyId}/employees/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEmployeeFromCompany(
+            @PathVariable Long companyId,
+            @PathVariable String userId) {
+        companyService.removeEmployee(companyId, userId);
     }
 
     @DeleteMapping("/{id}")

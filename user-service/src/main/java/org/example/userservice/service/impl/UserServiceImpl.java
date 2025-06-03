@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @Service
@@ -44,29 +45,32 @@ public class UserServiceImpl implements UserService {
         return mapToResponseDto(user);
     }
 
+
     @Override
-    public UserResponseDto createUser(UserRequestDto userRequestDto) {
+    public UserResponseDto createUser(UserCreateRequestDto userCreateRequestDto) {
         logger.info("Creating new user");
-        validateUserRequest(userRequestDto, null);
+        validateUserCreateRequest(userCreateRequestDto);
 
         User user = new User();
-        user.setFirstName(userRequestDto.firstName());
-        user.setLastName(userRequestDto.lastName());
-        user.setPhoneNumber(userRequestDto.phoneNumber());
+        user.setFirstName(userCreateRequestDto.firstName());
+        user.setLastName(userCreateRequestDto.lastName());
+        user.setPhoneNumber(userCreateRequestDto.phoneNumber());
 
         User savedUser = userRepository.save(user);
+        logger.info("Created user with id: " + savedUser.getId());
         return userMapper.fromUserResponseDto(savedUser, null);
     }
 
     @Override
-    public UserResponseDto updateUser(String id, UserRequestDto userRequestDto) {
+    public UserResponseDto updateUser(String id, UserUpdateRequestDto userUpdateRequestDto) {
         logger.info("Updating user with id: " + id);
         User existingUser = findUserByIdOrThrow(id);
-        validateUserRequest(userRequestDto, id);
+        validateUserUpdateRequest(id, userUpdateRequestDto);
 
-        updateUserFields(existingUser, userRequestDto);
+        updateUserFields(existingUser, userUpdateRequestDto);
         User updatedUser = userRepository.save(existingUser);
 
+        logger.info("Updated user with id: " + id);
         return mapToResponseDto(updatedUser);
     }
 
@@ -102,28 +106,30 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
-    private void validateUserRequest(UserRequestDto userRequestDto, String userId) {
-        if (userRequestDto.firstName() == null || userRequestDto.firstName().trim().isEmpty()) {
-            throw new InvalidInputException("First name is required");
+    private void validateUserCreateRequest(UserCreateRequestDto userCreateRequestDto) {
+        if (userRepository.findByPhoneNumber(userCreateRequestDto.phoneNumber()).isPresent()) {
+            throw new DuplicateResourceException("Phone number already exists");
         }
+    }
 
-        if (userRequestDto.phoneNumber() != null) {
-            User existingUserWithPhone = userRepository.findByPhoneNumber(userRequestDto.phoneNumber()).orElse(null);
-            if (existingUserWithPhone != null && (!existingUserWithPhone.getId().equals(userId))) {
+    private void validateUserUpdateRequest(String userId, UserUpdateRequestDto userUpdateRequestDto) {
+        if (userUpdateRequestDto.phoneNumber() != null) {
+            Optional<User> existingUserWithPhone = userRepository.findByPhoneNumber(userUpdateRequestDto.phoneNumber());
+            if (existingUserWithPhone.isPresent() && !existingUserWithPhone.get().getId().equals(userId)) {
                 throw new DuplicateResourceException("Phone number already exists");
             }
         }
     }
 
-    private void updateUserFields(User user, UserRequestDto userRequestDto) {
-        if (userRequestDto.firstName() != null && !userRequestDto.firstName().trim().isEmpty()) {
-            user.setFirstName(userRequestDto.firstName());
+    private void updateUserFields(User user, UserUpdateRequestDto userUpdateRequestDto) {
+        if (userUpdateRequestDto.firstName() != null && !userUpdateRequestDto.firstName().trim().isEmpty()) {
+            user.setFirstName(userUpdateRequestDto.firstName());
         }
-        if (userRequestDto.lastName() != null && !userRequestDto.lastName().trim().isEmpty()) {
-            user.setLastName(userRequestDto.lastName());
+        if (userUpdateRequestDto.lastName() != null && !userUpdateRequestDto.lastName().trim().isEmpty()) {
+            user.setLastName(userUpdateRequestDto.lastName());
         }
-        if (userRequestDto.phoneNumber() != null) {
-            user.setPhoneNumber(userRequestDto.phoneNumber());
+        if (userUpdateRequestDto.phoneNumber() != null) {
+            user.setPhoneNumber(userUpdateRequestDto.phoneNumber());
         }
     }
 

@@ -1,7 +1,8 @@
 package org.example.userservice.controller;
 
 import org.example.userservice.dto.CompanyAssignmentRequestDto;
-import org.example.userservice.dto.UserRequestDto;
+import org.example.userservice.dto.UserCreateRequestDto;
+import org.example.userservice.dto.UserUpdateRequestDto;
 import org.example.userservice.dto.UserResponseDto;
 import org.example.userservice.service.UserService;
 import org.springframework.data.domain.Page;
@@ -33,13 +34,13 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDto createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
-        return userService.createUser(userRequestDto);
+    public UserResponseDto createUser(@Valid @RequestBody UserCreateRequestDto userCreateRequestDto) {
+        return userService.createUser(userCreateRequestDto);
     }
 
     @PutMapping("/{id}")
-    public UserResponseDto updateUser(@PathVariable String id, @Valid @RequestBody UserRequestDto userRequestDto) {
-        return userService.updateUser(id, userRequestDto);
+    public UserResponseDto updateUser(@PathVariable String id, @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto) {
+        return userService.updateUser(id, userUpdateRequestDto);
     }
 
     @DeleteMapping("/{id}")

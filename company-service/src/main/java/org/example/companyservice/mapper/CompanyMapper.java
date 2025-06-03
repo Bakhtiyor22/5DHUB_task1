@@ -1,6 +1,6 @@
 package org.example.companyservice.mapper;
 
-import org.example.companyservice.dto.CompanyRequestDto;
+import org.example.companyservice.dto.CompanyCreateRequestDto;
 import org.example.companyservice.dto.CompanyResponseDto;
 import org.example.companyservice.dto.UserDto;
 import org.example.companyservice.entity.Company;
@@ -14,14 +14,15 @@ import java.util.stream.Collectors;
 @Component
 public class CompanyMapper {
 
-    public Company toCompany(CompanyRequestDto requestDto) {
+    public Company toCompany(CompanyCreateRequestDto requestDto) {
         if (requestDto == null) {
             return null;
         }
         Company company = new Company();
         company.setName(requestDto.getName());
         company.setBudget(requestDto.getBudget());
-        company.setEmployeeIds(Collections.emptyList());
+        company.setEmployeeIds(requestDto.getEmployeeIds() != null ?
+                requestDto.getEmployeeIds() : Collections.emptyList());
         return company;
     }
 
