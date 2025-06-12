@@ -50,9 +50,11 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public CompanyDto getSimpleCompanyById(Long id) {
-        logger.info("Fetching simple company details for id: " + id);
         Company company = findCompanyByIdOrThrow(id);
-        return new CompanyDto(company.getId(), company.getName(), company.getBudget());
+        CompanyDto response = companyMapper.toSimpleCompanyDto(company);
+
+        logger.info("Successfully fetched simple company details for id: " + id);
+        return response;
     }
 
     @Override
@@ -82,20 +84,17 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public CompanyResponseDto assignEmployee(Long companyId, String userId) {
-        logger.info("Assigning user " + userId + " to company " + companyId);
-
         validateUserExistsAndNotAssigned(userId);
         Company company = findCompanyByIdOrThrow(companyId);
-
-//        validateEmployeeNotInThisCompany(company, userId);
 
         company.getEmployeeIds().add(userId);
         companyRepository.save(company);
 
         assignCompanyToUserInUserService(userId, companyId);
+        CompanyResponseDto response = mapEntityToResponseDto(company);
 
         logger.info("Successfully assigned user " + userId + " to company " + companyId);
-        return mapEntityToResponseDto(company);
+        return response;
     }
 
     @Override
@@ -165,12 +164,6 @@ public class CompanyServiceImpl implements CompanyService {
         if (assignedCompany.isPresent()) {
             throw new BadRequestException("User " + userId + " is already assigned to company " +
                     assignedCompany.get().getId() + ". Remove from current company first.");
-        }
-    }
-
-    private void validateEmployeeNotInThisCompany(Company company, String userId) {
-        if (company.getEmployeeIds() != null && company.getEmployeeIds().contains(userId)) {
-            throw new BadRequestException("User " + userId + " is already an employee of company " + company.getId());
         }
     }
 

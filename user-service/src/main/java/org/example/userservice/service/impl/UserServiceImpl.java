@@ -48,36 +48,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto createUser(UserCreateRequestDto userCreateRequestDto) {
-        logger.info("Creating new user");
         validateUserCreateRequest(userCreateRequestDto);
 
-        User user = new User();
-        user.setFirstName(userCreateRequestDto.firstName());
-        user.setLastName(userCreateRequestDto.lastName());
-        user.setPhoneNumber(userCreateRequestDto.phoneNumber());
-
+        User user = userMapper.fromCreateRequestDto(userCreateRequestDto);
         User savedUser = userRepository.save(user);
-        logger.info("Created user with id: " + savedUser.getId());
-        return userMapper.fromUserResponseDto(savedUser, null);
+        UserResponseDto response = userMapper.fromUserResponseDto(savedUser, null);
+
+        logger.info("Successfully created user with id: " + savedUser.getId());
+        return response;
     }
 
     @Override
     public UserResponseDto updateUser(String id, UserUpdateRequestDto userUpdateRequestDto) {
-        logger.info("Updating user with id: " + id);
         User existingUser = findUserByIdOrThrow(id);
         validateUserUpdateRequest(id, userUpdateRequestDto);
 
         updateUserFields(existingUser, userUpdateRequestDto);
         User updatedUser = userRepository.save(existingUser);
+        UserResponseDto response = mapToResponseDto(updatedUser);
 
-        logger.info("Updated user with id: " + id);
-        return mapToResponseDto(updatedUser);
+        logger.info("Successfully updated user with id: " + id);
+        return response;
     }
 
     @Override
     public UserResponseDto assignCompanyToUser(String userId, Long companyId) {
         logger.info("Assigning company " + companyId + " to user " + userId);
-        User user = findUserByIdOrThrow(userId); // ✅ Already using reusable method
+        User user = findUserByIdOrThrow(userId);
 
         validateCompanyExists(companyId);
 
@@ -97,8 +94,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(String id) {
-        logger.info("Deleting user with id: " + id);
-
         User user = findUserByIdOrThrow(id);
 
         if (user.getCompanyId() != null) {

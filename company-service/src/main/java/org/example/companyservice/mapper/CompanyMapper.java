@@ -1,6 +1,7 @@
 package org.example.companyservice.mapper;
 
 import org.example.companyservice.dto.CompanyCreateRequestDto;
+import org.example.companyservice.dto.CompanyDto;
 import org.example.companyservice.dto.CompanyResponseDto;
 import org.example.companyservice.dto.UserDto;
 import org.example.companyservice.entity.Company;
@@ -8,8 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class CompanyMapper {
@@ -24,6 +23,13 @@ public class CompanyMapper {
         company.setEmployeeIds(requestDto.getEmployeeIds() != null ?
                 requestDto.getEmployeeIds() : Collections.emptyList());
         return company;
+    }
+
+    public CompanyDto toSimpleCompanyDto(Company company) {
+        if (company == null) {
+            return null;
+        }
+        return new CompanyDto(company.getId(), company.getName(), company.getBudget());
     }
 
     public CompanyResponseDto toCompanyResponseDto(Company company, List<UserDto> employees) {

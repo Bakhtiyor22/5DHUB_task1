@@ -1,6 +1,7 @@
 package org.example.userservice.mapper;
 
 import org.example.userservice.dto.CompanyDto;
+import org.example.userservice.dto.UserCreateRequestDto;
 import org.example.userservice.dto.UserResponseDto;
 import org.example.userservice.entity.User;
 import org.springframework.stereotype.Component;
@@ -21,5 +22,16 @@ public class UserMapper {
                 user.getPhoneNumber(),
                 Optional.ofNullable(companyDto)
         );
+    }
+
+    public User fromCreateRequestDto(UserCreateRequestDto requestDto) {
+        if (requestDto == null) {
+            return null;
+        }
+        User user = new User();
+        user.setFirstName(requestDto.firstName());
+        user.setLastName(requestDto.lastName());
+        user.setPhoneNumber(requestDto.phoneNumber());
+        return user;
     }
 }
